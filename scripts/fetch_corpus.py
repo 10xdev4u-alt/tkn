@@ -1,8 +1,9 @@
 # ponytail: Tamil Wikipedia fetcher.
-# Collects into a list first to avoid a pyarrow GIL-release crash during streaming cleanup.
-import os, sys
-from datasets import load_dataset
+# Workaround for a pyarrow/datasets GIL-release crash on streaming cleanup:
+# use os._exit(0) to skip Python's interpreter finalization entirely.
+import os
 os.makedirs("data", exist_ok=True)
+from datasets import load_dataset
 ds = load_dataset("wikimedia/wikipedia", "20231101.ta", split="train", streaming=True)
 texts = []
 for ex in ds:
@@ -11,8 +12,9 @@ for ex in ds:
         texts.append(t.strip())
         if len(texts) >= 30000:
             break
-# Now write outside the streaming context
 with open("data/tamil_raw.txt", "w", encoding="utf-8") as f:
     for t in texts:
         f.write(t + "\n")
 print(f"rows {len(texts)}")
+# Hard exit — pyarrow's streaming iterator crashes in __del__ during shutdown.
+os._exit(0)
