@@ -1,0 +1,8 @@
+{
+  "vocab_size": 32000,
+  "algo": "BPE",
+  "pre_tokenizer": "Whitespace",
+  "corpus": "data/tamil_clean.txt",
+  "lines": 656317,
+  "file": "tokenizer.json"
+}
