@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Iterable
 from tokenizers import Tokenizer
 from .normalize import normalize as _normalize
+from ._version import __version__
+__all__ = ["TamilTokenizer", "__version__"]
 
 _HERE = Path(__file__).parent
 
