@@ -1,0 +1,27 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Train 32k model
+        run: |
+          mkdir -p data
+          python scripts/fetch_corpus.py
+          python scripts/filter_corpus.py 0.5
+          python tok_train/train_bpe.py --vocab 32000 --name tokenizer.json
+      - name: Tests
+        run: python tests/test_roundtrip.py
+      - name: Bench
+        run: python benchmarks/bench.py
