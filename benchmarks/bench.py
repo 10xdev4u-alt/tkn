@@ -1,27 +1,33 @@
 # Benchmark Tamil BPE vs gpt-4 (cl100k) and llama-3 on pure + mixed Tamil.
-# ponytail: separate pure and mixed corpora; compression differs.
+# Supports all 4 vocab sizes; use BENCH_QUICK=1 for a 50-line smoke test.
 import os, json, time
 from tokenizers import Tokenizer
 
 CORPUS = "data/tamil_clean.txt"
-MODELS = {
-    "tkn-bpe-32k": "tkn/tokenizer.json",
-    "tkn-bpe-64k": "tkn/tokenizer_64k.json",
-}
-N = 200
+QUICK = os.environ.get("BENCH_QUICK") == "1"
+N = 50 if QUICK else 200
+
+# Find all model files
+import glob
+MODELS = {}
+for p in sorted(glob.glob("tkn/tokenizer*.json")):
+    name = os.path.basename(p).replace(".json", "")
+    if "_meta" in name: continue
+    label = name.replace("tokenizer", "tkn-bpe").replace("_", "-")
+    if label == "tkn-bpe": label = "tkn-bpe-32k"  # default
+    MODELS[label] = p
 
 def load_lines(n):
-    out = []
+    out = []; stride = 50 if QUICK else 200
     with open(CORPUS, encoding="utf-8") as f:
         for i, line in enumerate(f):
             line = line.strip()
             if not line: continue
-            if i % 200 == 0:
+            if i % stride == 0:
                 out.append(line)
                 if len(out) >= n: break
     return out
 
-# Mixed: Tamil phrases with English/code-mixed text. Realistic chat input.
 MIXED = [
     "நான் இன்று office-ல் meeting-க்கு போகிறேன்",
     "AI-ல் Tamil model train பண்ணணும்",
@@ -33,7 +39,7 @@ MIXED = [
     "online-ல் Tamil course படிங்க",
     "Google-ல் Tamil content search பண்ணலாம்",
     "இந்த video-வை YouTube-ல் share பண்ணு",
-] * 20  # 200 lines
+] * (5 if QUICK else 20)
 
 def measure(name, encode_fn, lines):
     toks = bytes_ = 0; secs = 0.0
@@ -45,6 +51,9 @@ def measure(name, encode_fn, lines):
             "bytes_per_token": bytes_/toks, "ms_per_line": 1000*secs/len(lines)}
 
 def main():
+    if not MODELS:
+        print("no model files found in tkn/. Run `make train` first.")
+        return
     results = {}
     for label, samples in [("pure-tamil", load_lines(N)), ("mixed-script", MIXED)]:
         rows = []
@@ -75,12 +84,11 @@ def main():
         json.dump(results, f, indent=2)
 
     for label, rows in results.items():
-        print(f"\n=== {label} ===")
+        print(f"\n=== {label} (N={len(samples)}) ===")
         print(f"{'tokenizer':<22} {'tokens':>8} {'bytes':>8} {'b/tok':>7} {'ms/line':>8}")
         for r in rows:
             print(f"{r['name']:<22} {r['tokens']:>8} {r['utf8_bytes']:>8} "
                   f"{r['bytes_per_token']:>7.2f} {r['ms_per_line']:>8.2f}")
-        # Ratios vs each baseline
         base = next((r for r in rows if r["name"].startswith("gpt-4")), rows[-1])
         for r in rows:
             if r["name"].startswith("tkn"):
