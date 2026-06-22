@@ -1,2 +1,2 @@
-tokenizers>=0.22,<0.23
+tokenizers>=0.23.1,<0.24
 tiktoken>=0.13
