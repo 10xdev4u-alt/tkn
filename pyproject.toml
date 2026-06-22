@@ -10,7 +10,7 @@ dependencies = [
     "tiktoken>=0.13",
 ]
 [project.optional-dependencies]
-train = ["datasets>=3", "transformers>=4.46"]
+train = ["datasets>=5.0.0", "transformers>=4.46"]
 [project.urls]
 Homepage = "https://github.com/10xdev4u-alt/tkn"
 
