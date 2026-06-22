@@ -34,7 +34,9 @@ def main():
                 print(f"  ok {name}: {local_n} lines")
             except Exception as e:
                 print(f"  skip {name}: {e}", file=sys.stderr)
+    import os
     print(f"kaniyam rows: {n} → {DEST}")
 
 if __name__ == "__main__":
     main()
+    os._exit(0)
