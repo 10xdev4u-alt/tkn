@@ -1,36 +1,41 @@
 # Export HF-compatible tokenizer_config.json + special_tokens_map.json
-# so this loads via AutoTokenizer.from_pretrained() with no custom code.
-import json
+# for all model files in tkn/. Ponytail: don't write config by hand.
+import json, glob, os
 from tokenizers import Tokenizer
 
-META = json.load(open("tkn/tokenizer_meta.json"))
-tok = Tokenizer.from_file("tkn/tokenizer.json")
-inv = {v: k for k, v in tok.get_vocab().items()}
+SPECIALS = ["<unk>", "<pad>", "<bos>", "<eos>"]
 
-SPECIAL_TOKENS = ["<unk>", "<pad>", "<bos>", "<eos>"]
-SPECIAL_IDS = {tok: inv[i] for i, tok in enumerate([]) }  # placeholder
-ids = {inv[i]: i for i in range(len(SPECIAL_TOKENS))}
-for t, i in ids.items():
-    assert inv[i] == t, f"mismatch: id {i} is {inv.get(i)}, expected {t}"
+def export(model_path: str):
+    name = os.path.basename(model_path)
+    if "_meta" in name: return
+    tok = Tokenizer.from_file(model_path)
+    inv = {v: k for k, v in tok.get_vocab().items()}
+    for i, s in enumerate(SPECIALS):
+        assert inv[i] == s, f"{model_path}: id {i} is {inv.get(i)}, expected {s}"
+    base = name.replace(".json", "")
+    cfg_path = f"tkn/{base}_config.json"
+    spec_path = f"tkn/{base}_specials.json"
+    cfg = {
+        "tokenizer_class": "PreTrainedTokenizerFast",
+        "model_max_length": 1_000_000,
+        "padding_side": "right", "truncation_side": "right",
+        "do_lower_case": False,
+        "unk_token": "<unk>", "pad_token": "<pad>",
+        "bos_token": "<bos>", "eos_token": "<eos>",
+        "vocab_size": tok.get_vocab_size(),
+        "clean_up_tokenization_spaces": False,
+    }
+    with open(cfg_path, "w") as f: json.dump(cfg, f, indent=2)
+    with open(spec_path, "w") as f:
+        json.dump({s.strip(""): s for s in SPECIALS}, f, indent=2)
+    print(f"wrote {cfg_path} + {spec_path}")
 
-cfg = {
-    "tokenizer_class": "PreTrainedTokenizerFast",
-    "model_max_length": 1_000_000,
-    "padding_side": "right",
-    "truncation_side": "right",
-    "do_lower_case": False,
-    "unk_token": "<unk>",
-    "pad_token": "<pad>",
-    "bos_token": "<bos>",
-    "eos_token": "<eos>",
-    "vocab_size": META["vocab_size"],
-    "clean_up_tokenization_spaces": False,
-}
-with open("tkn/tokenizer_config.json", "w") as f:
-    json.dump(cfg, f, indent=2)
-# ponytail: special_tokens_map maps token-name -> the token string, not the id
-special_map = {name.strip(""): name for name in SPECIAL_TOKENS}
-with open("tkn/special_tokens_map.json", "w") as f:
-    json.dump(special_map, f, indent=2)
-print("wrote tokenizer_config.json + special_tokens_map.json")
-print("special id mapping:", ids)
+def main():
+    # Default 32k model: keep existing tokenizer_config.json + special_tokens_map.json
+    # Other sizes: write tokenizer_{N}k_config.json + tokenizer_{N}k_specials.json
+    for p in sorted(glob.glob("tkn/tokenizer*.json")):
+        if "tokenizer_config" in p: continue
+        export(p)
+
+if __name__ == "__main__":
+    main()
