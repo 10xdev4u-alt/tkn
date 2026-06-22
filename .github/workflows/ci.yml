@@ -6,22 +6,35 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        vocab: [16000, 32000, 64000, 128000]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+        with: {python-version: "3.11", cache: pip}
       - name: Install
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-      - name: Train 32k model
+        run: pip install -r requirements-dev.txt
+      - name: Fetch + filter corpus
         run: |
           mkdir -p data
           python scripts/fetch_corpus.py
           python scripts/filter_corpus.py 0.5
-          python tok_train/train_bpe.py --vocab 32000 --name tokenizer.json
+      - name: Train ${{ matrix.vocab }}
+        run: |
+          name="tokenizer.json"
+          if [ "${{ matrix.vocab }}" != "32000" ]; then
+            name="tokenizer_$(( ${{ matrix.vocab }} / 1000 ))k.json"
+          fi
+          python tok_train/train_bpe.py --vocab ${{ matrix.vocab }} --name $name
       - name: Tests
-        run: python tests/test_roundtrip.py
-      - name: Bench
+        run: |
+          python tests/test_roundtrip.py
+          python tests/test_normalize.py
+          python tests/test_batch.py
+      - name: HF compat
+        if: matrix.vocab == 32000
+        run: python tests/test_hf_compat.py
+      - name: Quick bench
+        env: {BENCH_QUICK: "1"}
         run: python benchmarks/bench.py
