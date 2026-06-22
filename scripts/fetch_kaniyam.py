@@ -1,18 +1,16 @@
 # ponytail: Kaniyam Foundation's Tamil ebook collection.
-# URL: https://github.com/KaniyamFoundation/datasets
-import os, sys, urllib.request
+# Uses urllib.parse.quote to handle Tamil chars in URLs.
+import os, sys, urllib.request, urllib.parse
 DEST = "data/kaniyam_raw.txt"
 
-URLS = [
-    "https://raw.githubusercontent.com/KaniyamFoundation/datasets/master/tamil/தமிழ்_மொழி_இலக்கணம்.txt",
-    "https://raw.githubusercontent.com/KaniyamFoundation/datasets/master/tamil/கல்வி.txt",
-    "https://raw.githubusercontent.com/KaniyamFoundation/datasets/master/tamil/வரலாறு.txt",
-]
+BASE = "https://raw.githubusercontent.com/KaniyamFoundation/datasets/master/tamil/"
+FILES = ["தமிழ்_மொழி_இலக்கணம்.txt", "கல்வி.txt", "வரலாறு.txt"]
 
 def main():
     n = 0
     with open(DEST, "w", encoding="utf-8") as fo:
-        for url in URLS:
+        for name in FILES:
+            url = BASE + urllib.parse.quote(name)
             try:
                 with urllib.request.urlopen(url, timeout=15) as r:
                     data = r.read().decode("utf-8", errors="replace")
@@ -22,7 +20,7 @@ def main():
                             fo.write(line + "\n")
                             n += 1
             except Exception as e:
-                print(f"  skip {url}: {e}", file=sys.stderr)
+                print(f"  skip {name}: {e}", file=sys.stderr)
     print(f"kaniyam rows: {n} → {DEST}")
 
 if __name__ == "__main__":
