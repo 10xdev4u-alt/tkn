@@ -1,0 +1,14 @@
+include LICENSE
+include README.md
+include CHANGELOG.md
+include requirements.txt
+include pyproject.toml
+recursive-include tkn *.json
+recursive-include tkn *.py
+recursive-include tok_train *.py
+recursive-include scripts *.py
+recursive-include tests *.py
+recursive-include benchmarks *.py
+recursive-include benchmarks *.txt
+recursive-include benchmarks *.md
+recursive-include docs *.md
