@@ -8,10 +8,10 @@ out = ["# Tkn benchmark report", "", f"_Generated: {datetime.date.today()}_", ""
 def vocab_of(name):
     # tkn-bpe-32k → 32000, gpt-4 → 0, llama-3 → 0
     if not name.startswith("tkn"):
-        return -1
+        return 999999999
     try:
         n = int(name.split("-")[-1].rstrip("k")) * 1000
-        return n
+        return n + 1000000000
     except ValueError:
         return 0
 
