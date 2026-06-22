@@ -1,11 +1,15 @@
 # Lazy Tamil BPE tokenizer.
+#   t = TamilTokenizer()                 # 32k
+#   t.encode("வணக்கம்")                  # → [17701]
+#   t.encode_batch(["வணக்கம்","உலகம்"])  # → [[17701],[5310]]
+#   t.decode([17701, 5310])             # → "வணக்கம்உலகம்"
+#   "வணக்கம்" in t                      # → True
+#   len(t)                              # → 32000
 from pathlib import Path
 from tokenizers import Tokenizer
 from .normalize import normalize as _normalize
 
 _HERE = Path(__file__).parent
-
-SPECIALS = ("<unk>", "<pad>", "<bos>", "<eos>")
 
 def _model_path(vocab: int) -> Path:
     p = _HERE / ("tokenizer_64k.json" if vocab >= 64000 else "tokenizer.json")
@@ -19,14 +23,18 @@ class TamilTokenizer:
         self._tok = Tokenizer.from_file(str(p))
         self.vocab_size = vocab
         self.normalize = normalize
-        # Cache vocab lookup tables
-        self._id_to_token = self._tok.get_vocab()  # actually token -> id; invert below
-        self._token_to_id = {v: k for k, v in self._id_to_token.items()}
+        self._token_to_id = self._tok.get_vocab()
+        self._id_to_token = {v: k for k, v in self._token_to_id.items()}
 
     def encode(self, text: str) -> list[int]:
+        if not isinstance(text, str):
+            raise TypeError(f"encode() expects str, got {type(text).__name__}. Use encode_batch([...])")
         if self.normalize:
             text = _normalize(text)
         return self._tok.encode(text).ids
+
+    def encode_batch(self, texts: list[str]) -> list[list[int]]:
+        return [self.encode(t) for t in texts]
 
     def decode(self, ids) -> str:
         if not ids:
@@ -35,10 +43,9 @@ class TamilTokenizer:
             return [self._tok.decode(i) for i in ids]
         return self._tok.decode(ids)
 
-    def encode_batch(self, texts: list[str]) -> list[list[int]]:
-        return [self.encode(t) for t in texts]
-
     def tokenize(self, text: str) -> list[str]:
+        if not isinstance(text, str):
+            raise TypeError(f"tokenize() expects str, got {type(text).__name__}")
         if self.normalize:
             text = _normalize(text)
         return self._tok.encode(text).tokens
