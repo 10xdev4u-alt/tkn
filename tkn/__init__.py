@@ -1,20 +1,22 @@
 # Lazy Tamil BPE tokenizer.
-#   t = TamilTokenizer()                 # 32k
-#   t.encode("வணக்கம்")                  # → [17701]
-#   t.encode_batch(["வணக்கம்","உலகம்"])  # → [[17701],[5310]]
-#   t.decode([17701, 5310])             # → "வணக்கம்உலகம்"
-#   "வணக்கம்" in t                      # → True
-#   len(t)                              # → 32000
+#   t = TamilTokenizer()                      # 32k (default)
+#   t = TamilTokenizer(vocab=16000)           # 16k (mobile)
+#   t = TamilTokenizer(vocab=64000)           # 64k (better OOV)
+#   t = TamilTokenizer(vocab=128000)          # 128k (max compression)
 from pathlib import Path
 from tokenizers import Tokenizer
 from .normalize import normalize as _normalize
 
 _HERE = Path(__file__).parent
 
+# ponytail: any vocab works — file naming is the only contract.
 def _model_path(vocab: int) -> Path:
-    p = _HERE / ("tokenizer_64k.json" if vocab >= 64000 else "tokenizer.json")
+    if vocab == 32000:
+        p = _HERE / "tokenizer.json"
+    else:
+        p = _HERE / f"tokenizer_{vocab//1000}k.json"
     if not p.exists():
-        raise FileNotFoundError(f"tokenizer model not found: {p}. Run `make train`.")
+        raise FileNotFoundError(f"tokenizer model not found: {p}. Run train_bpe.py --vocab {vocab}.")
     return p
 
 class TamilTokenizer:
