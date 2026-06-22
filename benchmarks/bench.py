@@ -11,6 +11,7 @@ N = 50 if QUICK else 200
 import glob
 MODELS = {}
 for p in sorted(glob.glob("tkn/tokenizer*.json")):
+    if "_meta" in p or "tokenizer_config" in p: continue
     name = os.path.basename(p).replace(".json", "")
     if "_meta" in name: continue
     label = name.replace("tokenizer", "tkn-bpe").replace("_", "-")
