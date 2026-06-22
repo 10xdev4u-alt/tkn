@@ -1,0 +1,16 @@
+name: Coverage
+on: [push, pull_request]
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11", cache: pip}
+      - run: pip install -r requirements-dev.txt pytest-cov
+      - name: Train small model
+        run: |
+          python tok_train/train_bpe.py --vocab 16000 --name tokenizer_16k.json
+      - run: pytest --cov=tkn --cov-report=xml
+      - uses: codecov/codecov-action@v4
+        with: {file: coverage.xml}
