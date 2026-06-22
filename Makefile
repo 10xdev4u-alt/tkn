@@ -41,3 +41,11 @@ vocab-stats:
 	$(PY) scripts/inspect_vocab.py
 clean:
 	rm -rf tkn/tokenizer.json tkn/tokenizer_*k.json tkn/tokenizer_*k_meta.json tkn/tokenizer_meta.json benchmarks/results/bench.json
+
+.PHONY: lint type test-all
+lint:
+	.venv/bin/python -m ruff check tkn/ tok_train/ scripts/ tests/ benchmarks/ cli.py compare.py token_count.py batch_tokenize.py 2>&1 || true
+type:
+	.venv/bin/python -m mypy tkn/ 2>&1 || true
+test-all: test
+	.venv/bin/python tests/test_hf_compat.py
