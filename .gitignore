@@ -6,3 +6,10 @@ data/
 benchmarks/results/bench.json
 *.tmp
 *.bak
+.coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
