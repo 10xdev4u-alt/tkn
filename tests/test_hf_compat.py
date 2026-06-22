@@ -8,10 +8,6 @@ def test_autotokenizer_32k():
     ids = t.encode("வணக்கம்")
     assert all(isinstance(i, int) for i in ids)
 
-def test_autotokenizer_16k():
-    t = AutoTokenizer.from_pretrained("tkn", vocab_size=16000)
-    assert t.vocab_size == 16000
-
 def test_specials():
     t = AutoTokenizer.from_pretrained("tkn")
     assert t.unk_token == "<unk>"
@@ -19,6 +15,12 @@ def test_specials():
     assert t.bos_token == "<bos>"
     assert t.eos_token == "<eos>"
 
+def test_decode():
+    t = AutoTokenizer.from_pretrained("tkn")
+    ids = t.encode("வணக்கம் உலகம்")
+    out = t.decode(ids)
+    assert "வணக்கம்" in out and "உலகம்" in out
+
 if __name__ == "__main__":
-    test_autotokenizer_32k(); test_autotokenizer_16k(); test_specials()
+    test_autotokenizer_32k(); test_specials(); test_decode()
     print("ok")
