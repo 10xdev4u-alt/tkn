@@ -1,22 +1,19 @@
 # ponytail: turn benchmarks/results/bench.json into a markdown report.
-# Sort models by vocab size for stable, readable output.
+# Tkn models first (sorted by vocab), then baselines.
 import json, datetime, os
 
 r = json.load(open("benchmarks/results/bench.json"))
 out = ["# Tkn benchmark report", "", f"_Generated: {datetime.date.today()}_", ""]
 
 def vocab_of(name):
-    # tkn-bpe-32k → 32000, gpt-4 → 0, llama-3 → 0
-    if not name.startswith("tkn"):
-        return 999999999
+    if not name.startswith("tkn"): return 999_999
     try:
-        n = int(name.split("-")[-1].rstrip("k")) * 1000
-        return n + 1000000000
+        return int(name.split("-")[-1].rstrip("k")) * 1000
     except ValueError:
         return 0
 
 for label, rows in r.items():
-    rows_sorted = sorted(rows, key=lambda x: (vocab_of(x["name"]), x["name"]))
+    rows_sorted = sorted(rows, key=lambda x: vocab_of(x["name"]))
     out += [f"## {label}", "",
             "| tokenizer | tokens | utf-8 bytes | bytes/token | ms/line |",
             "|---|---:|---:|---:|---:|"]
