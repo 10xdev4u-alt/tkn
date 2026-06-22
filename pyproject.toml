@@ -13,3 +13,6 @@ dependencies = [
 train = ["datasets>=3", "transformers>=4.46"]
 [project.urls]
 Homepage = "https://github.com/10xdev4u-alt/tkn"
+
+[tool.setuptools.packages.find]
+include = ["tkn*"]
