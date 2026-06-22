@@ -93,3 +93,21 @@ class TamilTokenizer:
 
     def __repr__(self) -> str:
         return f"TamilTokenizer(vocab={self.vocab_size})"
+
+
+# Ponytail: lazy import huggingface_hub so the base lib has zero extra deps.
+def from_pretrained(repo_id: str = "10xdev4u-alt/tkn", vocab: int = 32000, **kwargs):
+    """Load a Tkn tokenizer from a HuggingFace Hub repo.
+
+    Ponytail: thin wrapper around snapshot_download + TamilTokenizer.
+    """
+    from huggingface_hub import snapshot_download
+    path = snapshot_download(
+        repo_id,
+        allow_patterns=[
+            f"tokenizer{'_' + str(vocab // 1000) + 'k' if vocab != 32000 else ''}.json",
+            "tokenizer_config.json" if vocab == 32000 else f"tokenizer_{vocab//1000}k_config.json",
+        ],
+    )
+    name = "tokenizer.json" if vocab == 32000 else f"tokenizer_{vocab//1000}k.json"
+    return TamilTokenizer(path=f"{path}/{name}", **kwargs)
