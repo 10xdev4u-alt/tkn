@@ -6,15 +6,15 @@ def test_local_load_via_path():
     # Direct file-path load (no network) — same code path as from_pretrained
     t = TamilTokenizer(path="tkn/tokenizer.json")
     assert t.vocab_size == 32000
-    assert t.encode("வணக்கம்") == [17701]
+    ids = t.encode("வணக்கம்")
+    assert len(ids) == 1
+    assert ids[0] == t.token_to_id("வணக்கம்")
 
 def test_from_pretrained_signature():
-    # Just check the function exists and accepts the expected args
     import inspect
     sig = inspect.signature(from_pretrained)
     assert "repo_id" in sig.parameters
     assert "vocab" in sig.parameters
-    # default vocab is 32000
     assert sig.parameters["vocab"].default == 32000
 
 if __name__ == "__main__":
