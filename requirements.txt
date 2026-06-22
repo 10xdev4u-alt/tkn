@@ -1,4 +1,2 @@
-tokenizers>=0.23
+tokenizers>=0.22,<0.23
 tiktoken>=0.13
-datasets>=3
-transformers>=4.46
