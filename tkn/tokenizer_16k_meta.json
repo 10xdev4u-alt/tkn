@@ -3,6 +3,6 @@
   "algo": "BPE",
   "pre_tokenizer": "Whitespace",
   "corpus": "data/tamil_clean.txt",
-  "lines": 656317,
+  "lines": 487331,
   "file": "tokenizer_16k.json"
 }

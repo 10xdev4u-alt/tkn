@@ -7,7 +7,7 @@ SPECIALS = ["<unk>", "<pad>", "<bos>", "<eos>"]
 
 def export(model_path: str):
     name = os.path.basename(model_path)
-    if "_meta" in name: return
+    if "_meta" in name or "config" in name or "specials" in name: return
     tok = Tokenizer.from_file(model_path)
     inv = {v: k for k, v in tok.get_vocab().items()}
     for i, s in enumerate(SPECIALS):
