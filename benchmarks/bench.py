@@ -1,6 +1,6 @@
 # Benchmark Tamil BPE vs gpt-4 (cl100k) and llama-3 on pure + mixed Tamil.
 # Supports all 4 vocab sizes; use BENCH_QUICK=1 for a 50-line smoke test.
-import os, json, time
+import os, sys, json, time
 from tokenizers import Tokenizer
 
 CORPUS = "data/tamil_clean.txt"
@@ -11,7 +11,7 @@ N = 50 if QUICK else 200
 import glob
 MODELS = {}
 for p in sorted(glob.glob("tkn/tokenizer*.json")):
-    if "_meta" in p or "tokenizer_config" in p: continue
+    if "_meta" in p or "config" in p or "specials" in p: continue
     name = os.path.basename(p).replace(".json", "")
     if "_meta" in name: continue
     label = name.replace("tokenizer", "tkn-bpe").replace("_", "-")
@@ -60,7 +60,7 @@ def main():
         rows = []
         for name, path in MODELS.items():
             tok = Tokenizer.from_file(path)
-            rows.append(measure(name, lambda s: tok.encode(s).ids, samples))
+            rows.append(measure(name, (lambda t: lambda s: t.encode(s).ids)(tok), samples))
         try:
             import tiktoken
             enc = tiktoken.get_encoding("cl100k_base")
