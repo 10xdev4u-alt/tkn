@@ -1,6 +1,5 @@
-# ponytail: peek at the vocab. Most common tokens, longest, shortest, sample OOV.
+# ponytail: peek at the vocab. Most common, longest, Tamil vs ASCII split.
 import sys, re
-from collections import Counter
 sys.path.insert(0, ".")
 from tkn import TamilTokenizer
 
@@ -12,22 +11,27 @@ args = ap.parse_args()
 
 t = TamilTokenizer(vocab=args.vocab)
 vocab = t.vocab()
-tokens = list(vocab.keys())
+TA = re.compile(r"[\u0b80-\u0bff]")
+ASCII = re.compile(r"^[\x00-\x7f]+$")
 
-# Sort by id (training frequency) for "top"
-by_id = sorted(vocab.items(), key=lambda kv: kv[1])
-print(f"vocab size: {len(tokens)}")
-print(f"\nfirst {args.top} tokens (lowest ids = most frequent in training):")
+# Skip special tokens for "top frequent"
+SPECIALS = {"<unk>", "<pad>", "<bos>", "<eos>"}
+by_id = sorted((kv for kv in vocab.items() if kv[0] not in SPECIALS), key=lambda kv: kv[1])
+
+tamil_tokens = [t for t in vocab if TA.search(t) and t not in SPECIALS]
+ascii_tokens = [t for t in vocab if ASCII.match(t) and t not in SPECIALS]
+mixed = [t for t in vocab if t not in SPECIALS and t not in tamil_tokens and t not in ascii_tokens]
+
+print(f"vocab size: {len(vocab)}")
+print(f"  Tamil-containing: {len(tamil_tokens)} ({100*len(tamil_tokens)/len(vocab):.1f}%)")
+print(f"  pure ASCII:       {len(ascii_tokens)} ({100*len(ascii_tokens)/len(vocab):.1f}%)")
+print(f"  mixed/other:      {len(mixed)} ({100*len(mixed)/len(vocab):.1f}%)")
+print(f"\nfirst {args.top} non-special tokens (lowest ids = most frequent):")
 for tok, idx in by_id[:args.top]:
-    print(f"  {idx:>6}  {tok!r}")
+    flag = "TA" if TA.search(tok) else ("AS" if ASCII.match(tok) else "  ")
+    print(f"  {idx:>6}  {flag}  {tok!r}")
 
-# Longest tokens
-longest = sorted(tokens, key=len, reverse=True)[:args.longest]
-print(f"\nlongest {args.longest} tokens:")
+longest = sorted(tamil_tokens, key=len, reverse=True)[:args.longest]
+print(f"\nlongest {args.longest} Tamil tokens:")
 for tok in longest:
     print(f"  {len(tok):>3} chars  {tok!r}")
-
-# Tamil vs non-Tamil
-TA = re.compile(r"[\u0b80-\u0bff]")
-ta = sum(1 for t in tokens if TA.search(t))
-print(f"\nTamil-containing tokens: {ta}/{len(tokens)} ({100*ta/len(tokens):.1f}%)")
