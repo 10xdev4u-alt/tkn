@@ -81,6 +81,8 @@ def main():
         results[label] = rows
 
     os.makedirs("benchmarks/results", exist_ok=True)
+    import os as _os
+    if _os.environ.get("BENCH_JSON"): print(json.dumps(results, indent=2))
     with open("benchmarks/results/bench.json", "w") as f:
         json.dump(results, f, indent=2)
 
