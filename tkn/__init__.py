@@ -111,3 +111,25 @@ def from_pretrained(repo_id: str = "10xdev4u-alt/tkn", vocab: int = 32000, **kwa
     )
     name = "tokenizer.json" if vocab == 32000 else f"tokenizer_{vocab//1000}k.json"
     return TamilTokenizer(path=f"{path}/{name}", **kwargs)
+
+
+    def encode_with_offsets(self, text: str) -> tuple[list[int], list[tuple[int, int]]]:
+        """Encode text and return (ids, char_spans) where each span is (start, end) in text.
+
+        Ponytail: useful for roundtripping or rendering highlighted tokens.
+        """
+        if not isinstance(text, str):
+            raise TypeError(f"encode_with_offsets() expects str, got {type(text).__name__}")
+        if self.normalize:
+            text = _normalize(text)
+        enc = self._tok.encode(text)
+        return enc.ids, [(s, e) for s, e in enc.offsets]
+
+    def decode_with_offsets(self, ids: list[int]) -> list[tuple[str, tuple[int, int]]]:
+        """Decode ids and return list of (token_string, (id, id)) pairs."""
+        # Decode each id individually to get spans. Single-id decode returns the token.
+        out = []
+        for i in ids:
+            tok = self._id_to_token.get(i, "")
+            out.append((tok, (i, i)))
+        return out
