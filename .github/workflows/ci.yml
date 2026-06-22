@@ -10,7 +10,7 @@ jobs:
       matrix:
         vocab: [16000, 32000, 64000, 128000]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with: {python-version: "3.11", cache: pip}
       - name: Install
